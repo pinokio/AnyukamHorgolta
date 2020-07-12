@@ -1,0 +1,28 @@
+﻿@model IEnumerable<AnyukamHorgolta.Models.Product>
+<div class="row pb-3 backgroundWhite">
+    @foreach (var product in Model)
+    {
+        <div class="col-lg-3 col-md-6">
+            <div class="row p-2">
+                <div class="col-12  p-1" style="border:1px solid #008cba; border-radius: 5px;">
+                    <div class="card" style="border:0px;">
+                        <img src="@product.ImageUrl" class="card-img-top rounded" />
+                        <div class="pl-1">
+                            @{ 
+                                string productTitle = product.Title.ToString();
+                                int maxLength = 26;
+                                if (product.Title.ToString().Length > maxLength) {
+                                    productTitle = product.Title.ToString().Substring(0, maxLength) + "...";
+                                }
+                            }
+                            <p class="card-title h5"><b style="color:#2c3e50">@productTitle</b></p>
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="Details" class="btn btn-primary form-control" asp-route-id="@product.Id">Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
