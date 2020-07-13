@@ -38,6 +38,9 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
                 OrderHeader = await _unitOfWork.OrderHeader.GetFirstOrDefaultAsync(u => u.Id == id, includeProperties: "ApplicationUser"),
                 OrderDetails = await _unitOfWork.OrderDetails.GetAllAsync(o => o.OrderId == id, includeProperties: "Product")
             };
+            if (OrderVM.OrderHeader == null) { 
+                return RedirectToAction(nameof(Index)); 
+            }
             return View(OrderVM);
         }
 
@@ -53,7 +56,7 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
                 //process the payment
                 var options = new ChargeCreateOptions
                 {
-                    Amount = Convert.ToInt32(orderHeader.OrderTotal * 10),
+                    Amount = Convert.ToInt32(orderHeader.OrderTotal * 100),
                     Currency = "huf",
                     Description = "Order ID : " + orderHeader.Id,
                     Source = stripeToken
@@ -73,6 +76,7 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
                 if (charge.Status.ToLower() == "succeeded")
                 {
                     orderHeader.PaymentStatus = SD.PaymentStatusApproved;
+                    orderHeader.OrderStatus = SD.StatusPaid;
                     orderHeader.PaymentDate = DateTime.Now;
                 }
 
@@ -86,7 +90,8 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
         public async Task<IActionResult> StartProcessing(int id)
         {
             OrderHeader orderHeader = await _unitOfWork.OrderHeader.GetFirstOrDefaultAsync(u => u.Id == id);
-            orderHeader.OrderStatus = SD.StatusProcessing;
+            //orderHeader.OrderStatus = SD.StatusProcessing;
+            orderHeader.OrderStatus = SD.StatusApproved;
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
@@ -113,7 +118,7 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
             {
                 var options = new RefundCreateOptions
                 {
-                    Amount = Convert.ToInt32(orderHeader.OrderTotal * 10),
+                    Amount = Convert.ToInt32(orderHeader.OrderTotal * 100),
                     Reason = RefundReasons.RequestedByCustomer,
                     Charge = orderHeader.TransactionId
                 };
@@ -160,8 +165,8 @@ namespace AnyukamHorgolta.Areas.Sales.Controllers
         private IEnumerable<OrderHeader> GetStatus(IEnumerable<OrderHeader> orderHeaderList, string status) =>
             status switch
             {
-                "pending" => orderHeaderList.Where(o => o.PaymentStatus == SD.PaymentStatusDelayedPayment),
-                "inprocess" => orderHeaderList.Where(o => o.OrderStatus == SD.StatusApproved || o.OrderStatus == SD.StatusProcessing),
+                "pending" => orderHeaderList.Where(o => o.PaymentStatus == SD.PaymentStatusDelayedPayment || (o.OrderStatus == SD.StatusApproved && o.PaymentStatus == SD.PaymentStatusPending)),
+                "inprocess" => orderHeaderList.Where(o => o.OrderStatus == SD.StatusApproved || o.OrderStatus == SD.StatusProcessing || o.OrderStatus == SD.StatusPending || o.OrderStatus == SD.StatusPaid),
                 "completed" => orderHeaderList.Where(o => o.OrderStatus == SD.StatusShipped),
                 "rejected" => orderHeaderList.Where(o => o.OrderStatus == SD.StatusCancelled || o.OrderStatus == SD.StatusRefunded || o.OrderStatus == SD.PaymentStatusRejected),
                 _ => orderHeaderList,

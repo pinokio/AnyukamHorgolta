@@ -198,7 +198,7 @@ namespace AnyukamHorgolta.Areas.Customer.Controllers
                 {
                     ShoppingCartVM.OrderHeader.TransactionId = charge.Id;
                 }
-                if (charge.Status.ToLower() == "succeded")
+                if (charge.Status.ToLower() == "succeeded")
                 {
                     ShoppingCartVM.OrderHeader.PaymentStatus = SD.PaymentStatusApproved;
                     ShoppingCartVM.OrderHeader.OrderStatus = SD.StatusApproved;

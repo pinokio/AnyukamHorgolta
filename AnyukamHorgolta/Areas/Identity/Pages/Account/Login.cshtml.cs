@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using AnyukamHorgolta.DataAccess.Repository.IRepository;
 using Microsoft.AspNetCore.Http;
 using AnyukamHorgolta.Utility;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
 
 namespace AnyukamHorgolta.Areas.Identity.Pages.Account
 {
@@ -43,6 +45,7 @@ namespace AnyukamHorgolta.Areas.Identity.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
+        [BindProperty]
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
         public string ReturnUrl { get; set; }
@@ -133,15 +136,20 @@ namespace AnyukamHorgolta.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+                ModelState.AddModelError(string.Empty, "Username or password is incorrect.");
+
+                return Page();
             }
 
-            var userId = await _userManager.GetUserIdAsync(user);
+            //var userId = await _userManager.GetUserIdAsync(user);
+            //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
             var callbackUrl = Url.Page(
                 "/Account/ConfirmEmail",
                 pageHandler: null,
-                values: new { userId = userId, code = code },
+                values: new { area = "Identity", userId = user.Id, code = code },
                 protocol: Request.Scheme);
             await _emailSender.SendEmailAsync(
                 Input.Email,

@@ -155,23 +155,30 @@
                                     <input id="shippingDate" value="@Model.OrderHeader.ShippingDate.ToShortDateString()" type="text" readonly class="form-control" />
                                 </div>
                             </div>
-                            <div class="row my-1">
-                                <div class="col-3">Transaction ID</div>
-                                <div class="col-9">
-                                    <input type="text" asp-for="OrderHeader.TransactionId" readonly class="form-control" />
-                                </div>
-                            </div>
                             @if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee))
                             {
                                 <div class="row my-1">
-                                    <div class="col-3">Payment Due Date</div>
+                                    <div class="col-3">Transaction ID</div>
+                                    <div class="col-9">
+                                        <input type="text" asp-for="OrderHeader.TransactionId" readonly class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="row my-1">
+                                    @if (Model.OrderHeader.TransactionId == null)
+                                    {
+                                        <div class="col-3">Payment Due Date</div>
                                     <div class="col-9">
                                         <input readonly value="@Model.OrderHeader.PaymentDueDate.ToShortDateString()" type="text" class="form-control" />
                                     </div>
+                                    }
+                                    else
+                                    {
                                     <div class="col-3">Payment Date</div>
                                     <div class="col-9">
                                         <input readonly id="paymentDate" value="@Model.OrderHeader.PaymentDate.ToShortDateString()" type="text" class="form-control" />
                                     </div>
+                                    }
                                 </div>
                                 <div class="row my-1">
                                     <div class="col-3">Payment Status</div>
@@ -193,7 +200,7 @@
                                             <div class="col-8">
                                                 <input type="hidden" asp-for="@item.Id" />
                                                 <h6 class="my-0">@item.Product.Title</h6>
-                                                <small class="text-muted">Price : @item.Price</small>
+                                                <small class="text-muted">Price : @item.Price</small><br />
                                                 <small class="text-muted">Quantity : @item.Count</small>
                                             </div>
                                             <div class="col-4">
@@ -216,12 +223,14 @@
                             @if (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee))
                             {
                                 <br />
-                                @if (Model.OrderHeader.OrderStatus == SD.StatusApproved)
+                                
+                                @if (Model.OrderHeader.OrderStatus == SD.StatusPending)
                                 {
                                     <a asp-action="StartProcessing" asp-route-id="@Model.OrderHeader.Id"
                                        class="btn btn-primary form-control">Start Processing</a>
                                 }
-                                @if (Model.OrderHeader.OrderStatus == SD.StatusProcessing)
+
+                                @if (Model.OrderHeader.OrderStatus == SD.StatusApproved || Model.OrderHeader.OrderStatus == SD.StatusPaid)
                                 {
                                     <input type="submit" value="Ship Order" onclick="return validateInput()"
                                            class="btn btn-primary form-control"
@@ -234,10 +243,12 @@
                             }
 
                             @if (Model.OrderHeader.PaymentStatus == SD.PaymentStatusDelayedPayment &&
-                           Model.OrderHeader.OrderStatus == SD.StatusShipped)
+                             Model.OrderHeader.OrderStatus == SD.StatusShipped || 
+                             (Model.OrderHeader.OrderStatus == SD.StatusApproved && Model.OrderHeader.PaymentStatus != SD.PaymentStatusApproved) &&
+                             Model.OrderHeader.OrderStatus != SD.StatusPaid)
                             {
                                 {
-                                    var OrderTotalForStripe = Model.OrderHeader.OrderTotal * 10;
+                                    var OrderTotalForStripe = Model.OrderHeader.OrderTotal * 100;
                                 }
 
                                 <script src="https://checkout.stripe.com/checkout.js" class="stripe-button" data-key="@Stripe.Value.PublishableKey"
@@ -254,8 +265,8 @@
                             }
 
                             @if (Model.OrderHeader.OrderStatus != SD.StatusRefunded &&
-                          Model.OrderHeader.OrderStatus != SD.StatusCancelled &&
-                          (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee)))
+                        Model.OrderHeader.OrderStatus != SD.StatusCancelled &&
+                        (User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Employee)))
                             {
                                 <div class="pt-2">
                                     <a asp-action="CancelOrder" asp-route-id="@Model.OrderHeader.Id"

@@ -1,20 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Options;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using System.Net.Mail;
-using System.Net;
-using SendGrid;
-using SendGrid.Helpers.Mail;
-using RestSharp;
-using RestSharp.Authenticators;
-using System.Net.Http;
-using System.Net.Http.Headers;
-/*using WebApplicationSendEmail.Model;
-using Microsoft.Extensions.Configuration;
-using System.Net.Mail;*/
 
 namespace AnyukamHorgolta.Utility
 {
